@@ -18,13 +18,12 @@ exports.handler = async function(event, context) {
     try {
         const { model, messages } = JSON.parse(event.body || '{}');
 
-        // 한국어 답변을 강제하는 시스템 프롬프트 설정
+        // 사용자가 질문한 언어를 감지하여 같은 언어로 답변하도록 하는 시스템 프롬프트
         const systemPrompt = {
             role: "system",
-            content: "당신은 한국어 전용 AI 도우미입니다. 모든 질문에 항상 완벽하고 자연스러운 한국어로만 답변하세요."
+            content: "You are a helpful AI assistant. Always respond naturally and accurately in the same language that the user uses in their prompt."
         };
 
-        // 대화 내역 맨 앞에 한국어 강제 지침을 붙여서 OpenRouter로 전송
         const formattedMessages = [systemPrompt, ...(messages || [])];
 
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
