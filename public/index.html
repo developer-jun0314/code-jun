@@ -3,180 +3,490 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Jun AI</title>
+    <title>Code Jun - 코딩 전문 AI</title>
+    <!-- 마크다운 파서 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Highlight.js CDN (어두운 테마) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <style>
         :root {
-            --bg-color: #121212;
-            --chat-bg: #1e1e1e;
-            --text-color: #e0e0e0;
-            --accent-color: #00e676;
-            --user-msg: #2b2b2b;
-            --ai-msg: #1a1a1a;
+            --sidebar-width: clamp(240px, 18rem, 300px);
+            --font-scale: clamp(0.8rem, 0.75rem + 0.3vw, 1rem);
         }
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; display: flex; height: 100vh; height: 100dvh; background-color: #121214; color: #f1f1f3; overflow: hidden; font-size: var(--font-scale); }
+        
+        #sidebar { width: var(--sidebar-width); background-color: #18181b; padding: clamp(14px, 1.5rem, 20px); display: flex; flex-direction: column; border-right: 1px solid #27272a; transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease; z-index: 1000; flex-shrink: 0; }
+        
+        .sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: clamp(16px, 1.8rem, 24px); }
+        .sidebar-logo { display: flex; align-items: center; gap: 10px; font-size: clamp(1rem, 0.9rem + 0.6vw, 1.25rem); font-weight: bold; color: #a78bfa; transition: transform 0.2s ease; }
+        .sidebar-logo:hover { transform: scale(1.02); }
+        .close-sidebar-btn { background: none; border: none; color: #a1a1aa; font-size: clamp(1.1rem, 1rem + 0.3vw, 1.3rem); cursor: pointer; padding: 4px; border-radius: 6px; display: none; transition: background-color 0.2s, color 0.2s, transform 0.2s; }
+        .close-sidebar-btn:hover { background-color: #27272a; color: #fff; transform: rotate(90deg); }
+
+        .sidebar-category { margin-bottom: clamp(16px, 1.8rem, 24px); }
+        .category-title { font-size: clamp(0.65rem, 0.6rem + 0.2vw, 0.75rem); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #71717a; margin-bottom: 8px; padding-left: 8px; }
+        
+        .sidebar-menu { display: flex; flex-direction: column; gap: 4px; list-style: none; }
+        .sidebar-item { display: flex; align-items: center; gap: 10px; padding: clamp(8px, 0.8rem, 10px) 12px; border-radius: 8px; font-size: clamp(0.8rem, 0.75rem + 0.3vw, 0.95rem); font-weight: 500; color: #d4d4d8; cursor: pointer; text-decoration: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .sidebar-item:hover { background-color: #27272a; color: #fff; transform: translateX(4px); }
+        .sidebar-item.active { background-color: #3f3f46; color: #fff; }
+
+        .sidebar-footer { margin-top: auto; display: flex; flex-direction: column; gap: 12px; padding-top: 16px; border-top: 1px solid #27272a; }
+        .upgrade-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #fff; border: none; padding: clamp(10px, 1rem, 12px); border-radius: 10px; font-size: clamp(0.8rem, 0.75rem + 0.3vw, 0.95rem); font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 10px rgba(124, 58, 237, 0.2); }
+        .upgrade-btn:hover { opacity: 0.95; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4); }
+
+        .footer-bottom-row { display: flex; align-items: center; justify-content: space-between; }
+        .profile-box { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px; border-radius: 8px; transition: background-color 0.2s; }
+        .profile-box:hover { background-color: #27272a; }
+        .avatar { width: clamp(28px, 2rem, 32px); height: clamp(28px, 2rem, 32px); background-color: #7c3aed; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: clamp(0.75rem, 0.7rem + 0.3vw, 0.9rem); font-weight: bold; flex-shrink: 0; }
+        .profile-name { font-size: clamp(0.8rem, 0.75rem + 0.3vw, 0.95rem); font-weight: 500; color: #f1f1f3; }
+        .settings-icon-btn { background: none; border: none; color: #a1a1aa; cursor: pointer; width: clamp(32px, 2.2rem, 36px); height: clamp(32px, 2.2rem, 36px); border-radius: 8px; background-color: #18181b; border: 1px solid #27272a; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+        .settings-icon-btn:hover { background-color: #27272a; color: #fff; transform: rotate(30deg); }
+
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0); z-index: 998; transition: background 0.3s ease; }
+        #overlay.show { display: block; background: rgba(0,0,0,0.6); }
+        
+        #main-content { flex: 1; display: flex; flex-direction: column; position: relative; background-color: #121214; min-width: 0; height: 100dvh; }
+        
+        #top-bar { display: flex; align-items: center; justify-content: space-between; padding: clamp(10px, 1.2rem, 16px); background: #121214; flex-shrink: 0; }
+        .top-left { display: flex; align-items: center; gap: 8px; }
+        .menu-btn { background: none; border: none; font-size: clamp(1.1rem, 1rem + 0.4vw, 1.3rem); cursor: pointer; color: #f1f1f3; padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s, transform 0.2s; }
+        .menu-btn:hover { background-color: #27272a; transform: scale(1.05); }
+        
+        .model-selector { display: flex; align-items: center; gap: 6px; font-size: clamp(0.8rem, 0.75rem + 0.3vw, 0.95rem); font-weight: 600; color: #f1f1f3; cursor: pointer; padding: 6px 10px; border-radius: 8px; background-color: #18181b; border: 1px solid #27272a; white-space: nowrap; transition: all 0.2s; }
+        .model-selector:hover { background-color: #27272a; border-color: #3f3f46; }
+        
+        .top-right { display: flex; align-items: center; gap: 8px; }
+        .icon-btn { background: none; border: none; color: #f1f1f3; font-size: clamp(0.9rem, 0.85rem + 0.3vw, 1.1rem); cursor: pointer; width: clamp(32px, 2.2rem, 36px); height: clamp(32px, 2.2rem, 36px); border-radius: 8px; background-color: #18181b; border: 1px solid #27272a; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+        .icon-btn:hover { background-color: #27272a; transform: scale(1.05); }
+
+        #chat-box { flex: 1; overflow-y: auto; padding: clamp(12px, 1.5rem, 24px); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; scroll-behavior: smooth; min-height: 0; }
+        #chat-box.chat-active { justify-content: flex-start; text-align: left; }
+        
+        .welcome-container { display: flex; flex-direction: column; align-items: center; gap: clamp(16px, 1.8rem, 24px); max-width: min(750px, 92%); width: 100%; animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        header {
-            padding: 20px;
-            background-color: var(--chat-bg);
-            border-bottom: 1px solid #333;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+
+        .welcome-title { font-size: clamp(1.1rem, 1rem + 1.2vw, 1.6rem); font-weight: 500; color: #e4e4e7; line-height: 1.4; margin-bottom: 4px; padding: 0 10px; word-break: keep-all; }
+        
+        .center-search-box { width: 100%; background-color: #1a1a1e; border: 1px solid #27272a; border-radius: clamp(12px, 1.1rem, 18px); padding: clamp(10px, 1rem, 14px); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .center-search-box:focus-within { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15), 0 4px 25px rgba(0,0,0,0.4); transform: translateY(-2px); }
+
+        #preview-container { display: none; align-items: center; gap: 10px; padding-bottom: 6px; border-bottom: 1px solid #27272a; text-align: left; }
+        .file-preview-card { position: relative; width: 50px; height: 50px; border-radius: 8px; overflow: hidden; background-color: #27272a; border: 1px solid #3f3f46; display: flex; align-items: center; justify-content: center; }
+        .file-preview-card img { width: 100%; height: 100%; object-fit: cover; }
+        .file-preview-card span { font-size: clamp(0.6rem, 0.55rem + 0.2vw, 0.7rem); color: #a1a1aa; padding: 4px; text-align: center; word-break: break-all; line-height: 1.2; }
+        .remove-file-btn { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.7); color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: clamp(0.6rem, 0.55rem + 0.1vw, 0.7rem); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        .search-bottom-row { display: flex; align-items: center; gap: clamp(4px, 0.6rem, 8px); width: 100%; }
+        .center-input { flex: 1; min-width: 60px; border: none; background: transparent; outline: none; font-size: clamp(0.85rem, 0.8rem + 0.4vw, 1.05rem); color: #f1f1f3; }
+        .center-input::placeholder { color: #71717a; }
+        
+        .input-action-btn { background: none; border: none; color: #a1a1aa; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 8px; transition: color 0.2s, background-color 0.2s; flex-shrink: 0; }
+        .input-action-btn:hover { color: #fff; background-color: #27272a; }
+
+        .thinking-level-select { background: transparent; border: none; color: #a1a1aa; font-size: clamp(0.7rem, 0.65rem + 0.2vw, 0.8rem); cursor: pointer; outline: none; padding: 2px 4px; border-radius: 6px; flex-shrink: 0; }
+        .thinking-level-select option { background-color: #1a1a1e; color: #f1f1f3; }
+
+        .send-btn { background-color: #7c3aed; color: #fff; width: clamp(32px, 2.2rem, 36px); height: clamp(32px, 2.2rem, 36px); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3); }
+        .send-btn:hover { opacity: 0.95; transform: scale(1.08); }
+
+        .msg-container { width: 100%; max-width: min(850px, 95%); display: flex; flex-direction: column; gap: clamp(16px, 1.8rem, 24px); text-align: left; margin-bottom: 20px; padding: 0 4px; }
+        .msg-wrapper { width: 100%; display: flex; align-items: flex-start; gap: clamp(10px, 1rem, 14px); animation: messageSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(15px); }
+        
+        @keyframes messageSlideIn {
+            to { opacity: 1; transform: translateY(0); }
         }
-        h1 { margin: 0; font-size: 24px; color: var(--accent-color); }
-        select {
-            padding: 8px;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            border: 1px solid #444;
-            border-radius: 4px;
-            outline: none;
+
+        .msg-wrapper.user { justify-content: flex-end; }
+        .chat-avatar { width: clamp(28px, 2rem, 32px); height: clamp(28px, 2rem, 32px); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: clamp(0.75rem, 0.7rem + 0.3vw, 0.9rem); font-weight: bold; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+        .user-avatar { background-color: #7c3aed; color: #fff; }
+        .ai-avatar { background-color: #27272a; color: #a78bfa; }
+        
+        .message { padding: clamp(10px, 1rem, 14px) clamp(14px, 1.2rem, 18px); line-height: 1.6; font-size: clamp(0.85rem, 0.8rem + 0.4vw, 1.05rem); border-radius: 12px; word-break: break-word; max-width: calc(100% - 46px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .user-msg { background-color: #27272a; color: #f1f1f3; border-top-right-radius: 4px; white-space: pre-wrap; }
+        .ai-msg { background-color: transparent; color: #f1f1f3; }
+
+        .ai-msg h1, .ai-msg h2, .ai-msg h3 { margin: 12px 0 6px 0; font-weight: 600; color: #f4f4f5; }
+        .ai-msg p { margin-bottom: 8px; }
+        .ai-msg ul, .ai-msg ol { padding-left: 20px; margin-bottom: 8px; }
+        .ai-msg strong { color: #a78bfa; font-weight: 600; }
+
+        .code-block-wrapper { background-color: #18181b; border: 1px solid #27272a; border-radius: 10px; margin: 12px 0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .code-header { display: flex; align-items: center; justify-content: space-between; background-color: #1f1f23; padding: 8px 14px; border-bottom: 1px solid #27272a; font-size: clamp(0.75rem, 0.7rem + 0.2vw, 0.85rem); color: #a1a1aa; font-weight: 600; }
+        .code-lang { text-transform: uppercase; color: #a78bfa; }
+        .code-actions { display: flex; align-items: center; gap: 8px; }
+        .code-btn { background: #27272a; border: 1px solid #3f3f46; color: #e4e4e7; padding: 3px 8px; border-radius: 6px; cursor: pointer; font-size: clamp(0.7rem, 0.65rem + 0.2vw, 0.75rem); transition: all 0.2s; }
+        .code-btn:hover { background-color: #3f3f46; color: #fff; }
+        .code-block-wrapper pre { padding: 14px; overflow-x: auto; background-color: #121214; margin: 0; }
+        .code-block-wrapper code { font-family: "Fira Code", Consolas, monospace; font-size: clamp(0.8rem, 0.75rem + 0.3vw, 0.9rem); line-height: 1.5; }
+
+        .ai-thinking-indicator { display: flex; align-items: center; gap: 12px; color: #a1a1aa; font-size: clamp(0.85rem, 0.8rem + 0.4vw, 1.05rem); }
+        .ai-spinner { width: 18px; height: 18px; border: 2px solid rgba(124, 58, 237, 0.2); border-top-color: #7c3aed; border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #model-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 20px; width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-title { font-size: 1.1rem; font-weight: 600; color: #f1f1f3; }
+        .modal-input { width: 100%; padding: 10px; background: #121214; border: 1px solid #27272a; border-radius: 8px; color: #f1f1f3; font-size: 0.9rem; outline: none; }
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 8px; }
+        .modal-btn { padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none; }
+        .modal-btn.cancel { background: #27272a; color: #a1a1aa; }
+        .modal-btn.confirm { background: #7c3aed; color: #fff; }
+
+        #file-input { display: none; }
+
+        @media (max-width: 768px) {
+            #sidebar { position: fixed; top: 0; left: 0; height: 100%; width: 280px; transform: translateX(-100%); }
+            #sidebar.open { transform: translateX(0); box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+            .close-sidebar-btn { display: block; }
         }
-        #chat-container {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .message {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 8px;
-            line-height: 1.5;
-            word-break: break-word;
-        }
-        .user-message {
-            align-self: flex-end;
-            background-color: var(--user-msg);
-            border: 1px solid #444;
-            border-bottom-right-radius: 0;
-        }
-        .ai-message {
-            align-self: flex-start;
-            background-color: var(--ai-msg);
-            border: 1px solid #333;
-            border-bottom-left-radius: 0;
-        }
-        .input-area {
-            padding: 20px;
-            background-color: var(--chat-bg);
-            border-top: 1px solid #333;
-            display: flex;
-            gap: 10px;
-        }
-        textarea {
-            flex: 1;
-            padding: 12px;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            border: 1px solid #444;
-            border-radius: 8px;
-            resize: none;
-            height: 50px;
-            outline: none;
-            font-family: inherit;
-        }
-        button {
-            padding: 0 24px;
-            background-color: var(--accent-color);
-            color: #000;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        button:hover { opacity: 0.8; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Code Jun AI</h1>
-        <!-- OpenRouter 공식 자동 무료 라우터 설정 -->
-        <select id="model-select">
-            <option value="openrouter/free">자동 무료 AI 모델</option>
-        </select>
-    </header>
-    
-    <div id="chat-container">
-        <div class="message ai-message">안녕하세요! Code Jun입니다. 질문을 입력해주세요.</div>
-    </div>
-    
-    <div class="input-area">
-        <textarea id="user-input" placeholder="메시지를 입력하세요... (Enter로 전송, Shift+Enter로 줄바꿈)"></textarea>
-        <button id="send-btn">전송</button>
+
+    <div id="overlay" onclick="toggleSidebar()"></div>
+
+    <div id="model-modal">
+        <div class="modal-content">
+            <div class="modal-title">OpenRouter 모델 변경</div>
+            <p style="font-size: 0.8rem; color: #a1a1aa; line-height: 1.4;">
+                사용할 OpenRouter 모델 ID를 입력하세요.<br>
+                (무료 모델 자동 추천: <code>openrouter/free</code>)
+            </p>
+            <input type="text" id="model-input-field" class="modal-input" value="openrouter/free">
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeModelModal()">취소</button>
+                <button class="modal-btn confirm" onclick="saveModelSelection()">적용</button>
+            </div>
+        </div>
     </div>
 
-    <script>
-        const chatContainer = document.getElementById('chat-container');
-        const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
-        const modelSelect = document.getElementById('model-select');
+    <input type="file" id="file-input" onchange="handleFileSelect(event)">
+
+    <aside id="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    Code Jun
+                </div>
+                <button class="close-sidebar-btn" onclick="toggleSidebar()">✕</button>
+            </div>
+            
+            <div class="sidebar-category">
+                <ul class="sidebar-menu">
+                    <li><a href="#" class="sidebar-item active" onclick="resetToHome()">새 채팅</a></li>
+                    <li><a href="#" class="sidebar-item" onclick="alert('프로젝트 기능 준비 중입니다.')">프로젝트</a></li>
+                </ul>
+            </div>
+        </div>
         
-        let conversationHistory = [];
+        <div class="sidebar-footer">
+            <button class="upgrade-btn" onclick="alert('PRO 업그레이드 페이지로 이동합니다.')">✨ Pro로 업그레이드</button>
+            <div class="footer-bottom-row">
+                <div class="profile-box">
+                    <div class="avatar">준</div>
+                    <span class="profile-name">신준호</span>
+                </div>
+                <button class="settings-icon-btn" onclick="alert('설정창을 엽니다.')">⚙</button>
+            </div>
+        </div>
+    </aside>
 
-        function addMessage(role, content) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${role === 'user' ? 'user-message' : 'ai-message'}`;
-            msgDiv.innerHTML = content.replace(/\n/g, '<br>');
-            chatContainer.appendChild(msgDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
+    <main id="main-content">
+        <header id="top-bar">
+            <div class="top-left">
+                <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+                <div class="model-selector" onclick="openModelModal()">
+                    <span id="current-model-display">openrouter/free</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+            </div>
+            <div class="top-right">
+                <button class="icon-btn" onclick="resetToHome()" title="새 채팅">✏️</button>
+            </div>
+        </header>
 
-        async function sendMessage() {
-            const text = userInput.value.trim();
-            if (!text) return;
+        <div id="chat-box">
+            <div id="welcome-view" class="welcome-container">
+                <h1 class="welcome-title" id="coding-quote">로딩 중...</h1>
+                
+                <div class="center-search-box">
+                    <div id="preview-container">
+                        <div class="file-preview-card" id="preview-card-box">
+                            <span id="preview-text">파일</span>
+                            <button class="remove-file-btn" onclick="removeFile()">✕</button>
+                        </div>
+                    </div>
 
-            addMessage('user', text);
-            userInput.value = '';
-            sendBtn.disabled = true;
+                    <div class="search-bottom-row">
+                        <button class="input-action-btn" onclick="triggerFileUpload()" title="링크 및 파일 첨부">🔗</button>
+                        <input type="text" id="user-input" class="center-input" placeholder="메시지 입력..." onkeypress="handleEnter(event)">
+                        
+                        <select class="thinking-level-select" title="사고 수준 설정">
+                            <option value="instant">즉시</option>
+                            <option value="deep">심층</option>
+                        </select>
 
-            conversationHistory.push({ role: "user", content: text });
+                        <button class="send-btn" onclick="handleSendButton()" title="전송">➤</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: modelSelect.value,
-                        messages: conversationHistory
-                    })
-                });
+<script>
+    let currentSelectedModel = "openrouter/free";
+    let isChatStarted = false;
+    let attachedFile = null;
+    let isGenerating = false;
+    let abortController = null;
+    let currentThinkingId = null;
 
-                const data = await response.json();
+    let conversationHistory = [
+        { role: "system", content: "You are Code Jun, a helpful, precise coding assistant." }
+    ];
 
-                if (response.ok && data.reply) {
-                    addMessage('ai', data.reply);
-                    conversationHistory.push({ role: "assistant", content: data.reply });
-                } else {
-                    addMessage('ai', '오류: ' + (data.error || '알 수 없는 오류가 발생했습니다.'));
-                }
-            } catch (error) {
-                addMessage('ai', '서버와 연결할 수 없습니다. 잠시 후 다시 시도해주세요.');
-            } finally {
-                sendBtn.disabled = false;
-                userInput.focus();
-            }
-        }
+    const codingQuotes = [
+        "\"Talk is cheap. Show me the code.\" - 리누스 토발즈",
+        "\"Premature optimization is the root of all evil.\" - 도널드 커누스",
+        "\"어떤 바보라도 컴퓨터가 이해할 수 있는 코드는 작성할 수 있다. 훌륭한 프로그래머는 사람이 이해할 수 있는 코드를 작성한다.\" - 마틴 파울러"
+    ];
 
-        sendBtn.addEventListener('click', sendMessage);
-        userInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
+    window.onload = function() {
+        document.getElementById("coding-quote").innerText = codingQuotes[Math.floor(Math.random() * codingQuotes.length)];
+    };
+
+    // 커스텀 마크다운 렌더러 설정 (코드 블록 헤더 및 복사 버튼)
+    const renderer = new marked.Renderer();
+    renderer.code = function(code, language) {
+        const lang = language || 'text';
+        const escapedCode = String(code).replace(/`/g, '\\`').replace(/\$/g, '\\$');
+        return `
+            <div class="code-block-wrapper">
+                <div class="code-header">
+                    <span class="code-lang">${lang}</span>
+                    <div class="code-actions">
+                        <button class="code-btn" onclick="copyCode(this)">복사</button>
+                    </div>
+                </div>
+                <pre><code class="hljs language-${lang}">${code}</code></pre>
+            </div>
+        `;
+    };
+    marked.setOptions({ renderer: renderer, breaks: true });
+
+    function copyCode(btn) {
+        const wrapper = btn.closest('.code-block-wrapper');
+        const codeText = wrapper.querySelector('code').innerText;
+        navigator.clipboard.writeText(codeText).then(() => {
+            btn.innerText = "복사됨!";
+            setTimeout(() => { btn.innerText = "복사"; }, 2000);
         });
-    </script>
+    }
+
+    function openModelModal() { document.getElementById("model-modal").style.display = "flex"; }
+    function closeModelModal() { document.getElementById("model-modal").style.display = "none"; }
+    function saveModelSelection() {
+        const val = document.getElementById("model-input-field").value.trim();
+        if (val) {
+            currentSelectedModel = val;
+            document.getElementById("current-model-display").innerText = val;
+        }
+        closeModelModal();
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("overlay");
+        if (window.innerWidth <= 768) {
+            sidebar.classList.toggle("open");
+            overlay.classList.toggle("show");
+        } else {
+            sidebar.style.transform = sidebar.style.transform === "translateX(-100%)" ? "translateX(0)" : "translateX(-100%)";
+        }
+    }
+
+    function resetToHome() {
+        if (isGenerating && abortController) abortController.abort();
+        isChatStarted = false;
+        attachedFile = null;
+        conversationHistory = [{ role: "system", content: "You are Code Jun, a helpful, precise coding assistant." }];
+        const chatBox = document.getElementById("chat-box");
+        chatBox.classList.remove("chat-active");
+        chatBox.innerHTML = `
+            <div id="welcome-view" class="welcome-container">
+                <h1 class="welcome-title">${codingQuotes[Math.floor(Math.random() * codingQuotes.length)]}</h1>
+                <div class="center-search-box">
+                    <div id="preview-container" style="display: none;"></div>
+                    <div class="search-bottom-row">
+                        <button class="input-action-btn" onclick="triggerFileUpload()">🔗</button>
+                        <input type="text" id="user-input" class="center-input" placeholder="메시지 입력..." onkeypress="handleEnter(event)">
+                        <button class="send-btn" onclick="handleSendButton()">➤</button>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    function triggerFileUpload() { document.getElementById("file-input").click(); }
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            attachedFile = file;
+            const previewContainer = document.getElementById("preview-container");
+            if(previewContainer) {
+                previewContainer.style.display = "flex";
+                document.getElementById("preview-card-box").innerHTML = `<span>${file.name.substring(0, 5)}...</span><button class="remove-file-btn" onclick="removeFile()">✕</button>`;
+            }
+        }
+    }
+    function removeFile() {
+        attachedFile = null;
+        document.getElementById("file-input").value = "";
+        const previewContainer = document.getElementById("preview-container");
+        if(previewContainer) previewContainer.style.display = "none";
+    }
+
+    function readFileContent(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            if (file.type.startsWith('image/')) reader.readAsDataURL(file);
+            else reader.readAsText(file);
+        });
+    }
+
+    function handleSendButton() { if (isGenerating) { abortController?.abort(); } else { sendMessage(); } }
+
+    async function sendMessage() {
+        const inputField = document.getElementById("user-input");
+        if (!inputField) return;
+        const message = inputField.value.trim();
+        if (message === "" && !attachedFile) return;
+
+        const chatBox = document.getElementById("chat-box");
+        if (!isChatStarted) {
+            isChatStarted = true;
+            chatBox.classList.add("chat-active");
+            chatBox.innerHTML = `
+                <div id="msg-container" class="msg-container"></div>
+                <div style="width: 100%; max-width: min(850px, 95%); margin-top: auto; padding-top: 10px;">
+                    <div class="center-search-box">
+                        <div id="preview-container" style="display: none;"></div>
+                        <div class="search-bottom-row">
+                            <button class="input-action-btn" onclick="triggerFileUpload()">🔗</button>
+                            <input type="text" id="user-input" class="center-input" placeholder="메시지 입력..." onkeypress="handleEnter(event)">
+                            <button class="send-btn" onclick="handleSendButton()">➤</button>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        const msgContainer = document.getElementById("msg-container");
+        let displayMsg = message;
+        let filePayload = null;
+        
+        if (attachedFile) {
+            displayMsg = `[첨부파일: ${attachedFile.name}]\n` + message;
+            filePayload = { name: attachedFile.name, type: attachedFile.type || 'text/plain', content: await readFileContent(attachedFile) };
+        }
+
+        appendMessage(displayMsg, "user", msgContainer);
+        removeFile();
+        inputField.value = "";
+
+        let fullUserMessage = message;
+        if (filePayload) {
+            if (filePayload.type.startsWith('image/')) {
+                fullUserMessage = [{ type: "text", text: message || "이미지 분석" }, { type: "image_url", image_url: { url: filePayload.content } }];
+            } else {
+                fullUserMessage = `[파일명: ${filePayload.name}]\n\`\`\`\n${filePayload.content}\n\`\`\`\n${message}`;
+            }
+        }
+
+        conversationHistory.push({ role: "user", content: fullUserMessage });
+
+        currentThinkingId = "thinking-" + Date.now();
+        appendMessage(`<div class="ai-thinking-indicator"><div class="ai-spinner"></div><span>AI 답변 생성 중...</span></div>`, "ai", msgContainer, currentThinkingId, true);
+
+        isGenerating = true;
+        abortController = new AbortController();
+
+        try {
+            const response = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ model: currentSelectedModel, messages: conversationHistory }),
+                signal: abortController.signal
+            });
+
+            const data = await response.json();
+            document.getElementById(currentThinkingId)?.remove();
+
+            if (!response.ok) {
+                appendMessage(`[API 오류] ${data.error || "알 수 없는 오류"}`, "ai", msgContainer);
+                return;
+            }
+
+            if (data.reply) {
+                conversationHistory.push({ role: "assistant", content: data.reply });
+                appendMessage(data.reply, "ai", msgContainer);
+            }
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            document.getElementById(currentThinkingId)?.remove();
+            appendMessage(`[오류 발생] ${error.message}`, "ai", msgContainer);
+        } finally {
+            isGenerating = false;
+            abortController = null;
+        }
+    }
+
+    function appendMessage(text, sender, container, id = null, isHtml = false) {
+        const wrapper = document.createElement("div");
+        wrapper.className = `msg-wrapper ${sender}`;
+        if (id) wrapper.id = id;
+
+        const avatar = document.createElement("div");
+        avatar.className = `chat-avatar ${sender}-avatar`;
+        avatar.innerText = sender === 'ai' ? '⚡' : '준';
+
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `message ${sender}-msg`;
+        
+        if (isHtml) {
+            msgDiv.innerHTML = text;
+        } else {
+            if (sender === 'ai') {
+                msgDiv.innerHTML = marked.parse(String(text));
+                msgDiv.querySelectorAll('pre code').forEach((block) => {
+                    try { hljs.highlightElement(block); } catch(e){}
+                });
+            } else {
+                msgDiv.innerHTML = String(text).replace(/\n/g, "<br>");
+            }
+        }
+
+        if (sender === 'ai') {
+            wrapper.appendChild(avatar);
+            wrapper.appendChild(msgDiv);
+        } else {
+            wrapper.appendChild(msgDiv);
+            wrapper.appendChild(avatar);
+        }
+        
+        container.appendChild(wrapper);
+        const chatBox = document.getElementById("chat-box");
+        chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+    }
+
+    function handleEnter(event) { if (event.key === "Enter") handleSendButton(); }
+</script>
 </body>
 </html>
