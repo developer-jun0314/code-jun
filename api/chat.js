@@ -1,4 +1,4 @@
-export default async function handler(event, context) {
+exports.handler = async function(event, context) {
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
@@ -10,12 +10,13 @@ export default async function handler(event, context) {
     if (!apiKey) {
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: 'Server API Key is not configured.' }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: 'API 키가 설정되지 않았습니다. Netlify 환경변수를 확인하세요.' }),
         };
     }
 
     try {
-        const { model, messages } = JSON.parse(event.body);
+        const { model, messages } = JSON.parse(event.body || '{}');
 
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
@@ -34,20 +35,23 @@ export default async function handler(event, context) {
         if (!response.ok) {
             return {
                 statusCode: response.status,
-                body: JSON.stringify({ error: data.error?.message || "OpenRouter API Error" }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ error: data.error?.message || "OpenRouter API 오류" }),
             };
         }
 
         const reply = data.choices && data.choices[0] ? data.choices[0].message.content : "";
         return {
             statusCode: 200,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ reply }),
         };
 
     } catch (error) {
         return {
             statusCode: 500,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ error: error.message }),
         };
     }
-}
+};
