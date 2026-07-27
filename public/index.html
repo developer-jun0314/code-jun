@@ -61,6 +61,7 @@
             stroke-linejoin: round;
             fill: none;
             flex-shrink: 0;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
         }
 
         /* ==========================================================================
@@ -217,7 +218,7 @@
             margin-top: auto;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
             padding-top: var(--spacing-md);
             border-top: 1px solid var(--border-color);
         }
@@ -235,22 +236,9 @@
             padding: var(--spacing-xs) var(--spacing-sm);
             border-radius: 8px;
             transition: background 0.2s;
+            width: 100%;
         }
         .login-btn:hover { background-color: var(--bg-card-hover); }
-
-        .upgrade-pill-btn {
-            background: linear-gradient(135deg, var(--accent-glow), var(--accent-purple));
-            border: none;
-            color: #fff;
-            padding: clamp(6px, 0.9vh, 9px) var(--spacing-md);
-            border-radius: 20px;
-            font-size: clamp(0.78rem, 0.83em, 0.9rem);
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
-            transition: all 0.2s;
-        }
-        .upgrade-pill-btn:hover { transform: translateY(-1px); box-shadow: 0 0 15px rgba(99, 102, 241, 0.5); }
 
         #overlay {
             display: none;
@@ -376,7 +364,7 @@
             gap: var(--spacing-xs);
         }
 
-        .mic-btn, .waveform-btn {
+        .mic-btn {
             background: none;
             border: none;
             color: var(--text-muted);
@@ -390,15 +378,39 @@
         }
         .mic-btn:hover { background-color: var(--bg-card-hover); color: var(--text-main); }
 
+        /* 동적 애니메이션 버튼 */
         .waveform-btn {
             background: linear-gradient(135deg, var(--accent-glow), var(--accent-purple));
             color: #fff;
-            width: clamp(30px, 2.1rem, 34px);
-            height: clamp(30px, 2.1rem, 34px);
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+            width: clamp(32px, 2.3rem, 38px);
+            height: clamp(32px, 2.3rem, 38px);
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.35);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .waveform-btn:hover { transform: scale(1.04); box-shadow: 0 0 15px rgba(99, 102, 241, 0.5); }
+        .waveform-btn:hover { transform: scale(1.05); box-shadow: 0 0 18px rgba(99, 102, 241, 0.55); }
+
+        /* 애니메이션용 아이콘 전환 효과 */
+        .action-icon-anim {
+            animation: iconPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes iconPop {
+            0% { transform: scale(0.4) rotate(-30deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        /* 중지 버튼 스타일 강조 */
+        .waveform-btn.stop-mode {
+            background: linear-gradient(135deg, #f43f5e, #e11d48);
+            box-shadow: 0 0 12px rgba(244, 63, 94, 0.4);
+        }
 
         /* 추천 질문 카드 */
         .recommend-questions-list {
@@ -587,13 +599,11 @@
                 <svg class="svg-icon" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
                 로그인
             </button>
-            <button class="upgrade-pill-btn" onclick="alert('PRO 플랜으로 업그레이드됩니다.')">PRO 업그레이드</button>
         </div>
     </aside>
 
     <!-- 메인 영역 -->
     <main id="main-content">
-        <!-- 모델 표시를 없앤 상단 바 -->
         <header id="top-bar">
             <button class="icon-btn" onclick="toggleSidebar()" title="메뉴 열기">
                 <svg class="svg-icon" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
@@ -606,10 +616,9 @@
 
         <div id="chat-box">
             <div id="welcome-view" class="home-view">
-                <!-- 다양하게 변하는 랜덤 인사 메시지 -->
                 <h1 id="dynamic-greeting" class="home-title">오늘은 무슨 코딩을 할까요?</h1>
                 
-                <!-- 독자적 글래스모피즘 입력 바 -->
+                <!-- 메인 입력 바 -->
                 <div class="chat-input-bar">
                     <button class="plus-btn" onclick="triggerFileUpload()" title="코드/파일 첨부">
                         <svg class="svg-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -620,15 +629,20 @@
                             <span id="chip-filename"></span>
                             <span style="cursor:pointer;" onclick="removeFile()">✕</span>
                         </div>
-                        <input type="text" id="user-input" class="main-input" placeholder="코드 문제, 버그, 알고리즘에 대해 물어보세요" onkeypress="handleEnter(event)">
+                        <input type="text" id="user-input" class="main-input" placeholder="코드 문제, 버그, 알고리즘에 대해 물어보세요" oninput="updateActionButtonState()" onkeypress="handleEnter(event)">
                     </div>
 
                     <div class="input-actions-right">
-                        <button class="mic-btn" title="음성 명령">
+                        <button class="mic-btn" title="음성 입력">
                             <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
                         </button>
-                        <button class="waveform-btn" onclick="handleSendButton()" title="전송">
-                            <svg class="svg-icon" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"></line><line x1="17" y1="5" x2="17" y2="19"></line><line x1="7" y1="9" x2="7" y2="15"></line></svg>
+                        <!-- 상태별 자동 전환 버튼 (음성파형 / 비행기 / 중지) -->
+                        <button id="action-btn" class="waveform-btn" onclick="handleSendButton()" title="음성 모드">
+                            <svg id="action-icon" class="svg-icon action-icon-anim" viewBox="0 0 24 24">
+                                <line x1="12" y1="2" x2="12" y2="22"></line>
+                                <line x1="17" y1="5" x2="17" y2="19"></line>
+                                <line x1="7" y1="9" x2="7" y2="15"></line>
+                            </svg>
                         </button>
                     </div>
                 </div>
@@ -669,8 +683,13 @@
     let isGenerating = false;
     let abortController = null;
     let recentChats = [];
+    let currentButtonState = "waveform"; // waveform, send, stop
 
-    // 랜딩 시 출력할 독자적인 인사 메시지 리스트
+    // SVG 아이콘 템플릿
+    const ICON_WAVEFORM = `<line x1="12" y1="2" x2="12" y2="22"></line><line x1="17" y1="5" x2="17" y2="19"></line><line x1="7" y1="9" x2="7" y2="15"></line>`;
+    const ICON_SEND = `<line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>`;
+    const ICON_STOP = `<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"></rect>`;
+
     const greetings = [
         "오늘은 무슨 코딩을 할까요?",
         "어떤 코드 문제나 프로젝트를 도와드릴까요?",
@@ -681,6 +700,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
         setRandomGreeting();
+        updateActionButtonState();
     });
 
     function setRandomGreeting() {
@@ -689,6 +709,48 @@
             const randomIndex = Math.floor(Math.random() * greetings.length);
             greetingEl.innerText = greetings[randomIndex];
         }
+    }
+
+    /* 실시간 입력 및 상태 변화에 따라 아이콘 전환 애니메이션 처리 */
+    function updateActionButtonState() {
+        const actionBtn = document.getElementById("action-btn");
+        const actionIcon = document.getElementById("action-icon");
+        const inputField = document.getElementById("user-input");
+        if (!actionBtn || !actionIcon) return;
+
+        const text = inputField ? inputField.value.trim() : "";
+        let targetState = "waveform";
+
+        if (isGenerating) {
+            targetState = "stop";
+        } else if (text.length > 0 || attachedFile !== null) {
+            targetState = "send";
+        } else {
+            targetState = "waveform";
+        }
+
+        if (currentButtonState === targetState) return;
+        currentButtonState = targetState;
+
+        // 애니메이션 효과 적용을 위한 클래스 재적용
+        actionIcon.classList.remove("action-icon-anim");
+        void actionIcon.offsetWidth; // DOM reflow 트리거
+
+        if (targetState === "stop") {
+            actionIcon.innerHTML = ICON_STOP;
+            actionBtn.classList.add("stop-mode");
+            actionBtn.title = "답장 중지";
+        } else if (targetState === "send") {
+            actionIcon.innerHTML = ICON_SEND;
+            actionBtn.classList.remove("stop-mode");
+            actionBtn.title = "전송하기";
+        } else {
+            actionIcon.innerHTML = ICON_WAVEFORM;
+            actionBtn.classList.remove("stop-mode");
+            actionBtn.title = "음성 입력 모드";
+        }
+
+        actionIcon.classList.add("action-icon-anim");
     }
 
     // Marked 마크다운 파서 및 Highlight.js 세팅
@@ -738,6 +800,7 @@
                 chip.style.display = "inline-flex";
                 document.getElementById("chip-filename").innerText = file.name;
             }
+            updateActionButtonState();
         }
     }
     function removeFile() {
@@ -745,17 +808,25 @@
         document.getElementById("file-input").value = "";
         const chip = document.getElementById("preview-chip");
         if(chip) chip.style.display = "none";
+        updateActionButtonState();
     }
 
     function sendQuickQuestion(questionText) {
         const input = document.getElementById("user-input");
         if(input) input.value = questionText;
+        updateActionButtonState();
         sendMessage();
     }
 
     function handleSendButton() {
-        if (isGenerating && abortController) { abortController.abort(); }
-        else { sendMessage(); }
+        if (isGenerating) {
+            // 답장 중지 실행
+            if (abortController) abortController.abort();
+            isGenerating = false;
+            updateActionButtonState();
+        } else {
+            sendMessage();
+        }
     }
 
     // 최근 채팅 기록 추가
@@ -799,11 +870,15 @@
                                 <span id="chip-filename"></span>
                                 <span style="cursor:pointer;" onclick="removeFile()">✕</span>
                             </div>
-                            <input type="text" id="user-input" class="main-input" placeholder="메시지 입력..." onkeypress="handleEnter(event)">
+                            <input type="text" id="user-input" class="main-input" placeholder="메시지 입력..." oninput="updateActionButtonState()" onkeypress="handleEnter(event)">
                         </div>
                         <div class="input-actions-right">
-                            <button class="waveform-btn" onclick="handleSendButton()">
-                                <svg class="svg-icon" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"></line><line x1="17" y1="5" x2="17" y2="19"></line><line x1="7" y1="9" x2="7" y2="15"></line></svg>
+                            <button id="action-btn" class="waveform-btn" onclick="handleSendButton()" title="음성 모드">
+                                <svg id="action-icon" class="svg-icon action-icon-anim" viewBox="0 0 24 24">
+                                    <line x1="12" y1="2" x2="12" y2="22"></line>
+                                    <line x1="17" y1="5" x2="17" y2="19"></line>
+                                    <line x1="7" y1="9" x2="7" y2="15"></line>
+                                </svg>
                             </button>
                         </div>
                     </div>
@@ -822,6 +897,7 @@
         appendMessage(`답변 생성 중...`, "ai", msgContainer, thinkingId);
 
         isGenerating = true;
+        updateActionButtonState();
         abortController = new AbortController();
 
         try {
@@ -844,12 +920,16 @@
                 appendMessage(data.reply, "ai", msgContainer);
             }
         } catch (error) {
-            if (error.name === 'AbortError') return;
             document.getElementById(thinkingId)?.remove();
-            appendMessage(`[시스템 오류] ${error.message}`, "ai", msgContainer);
+            if (error.name === 'AbortError') {
+                appendMessage(`답변 작성이 중지되었습니다.`, "ai", msgContainer);
+            } else {
+                appendMessage(`[시스템 오류] ${error.message}`, "ai", msgContainer);
+            }
         } finally {
             isGenerating = false;
             abortController = null;
+            updateActionButtonState();
         }
     }
 
