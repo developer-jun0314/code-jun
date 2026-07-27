@@ -20,7 +20,7 @@ exports.handler = async function(event, context) {
     try {
         const { model, messages } = JSON.parse(event.body || '{}');
 
-        // AI가 너무 딱딱하지도, 멍청하지도 않게 조율하는 전담 개발자 시스템 프롬프트
+        // 현업 개발자 동료 페르소나 및 답변 지침
         const systemPrompt = {
             role: "system",
             content: `
@@ -37,19 +37,14 @@ exports.handler = async function(event, context) {
 `
         };
 
-        // 전달받은 messages 내역 처리 (최상단 시스템 프롬프트 보장)
+        // 메시지 내역에 시스템 프롬프트 반영
         let finalMessages = messages || [];
         if (!finalMessages.some(m => m.role === 'system')) {
             finalMessages = [systemPrompt, ...finalMessages];
         }
 
-        /* 
-           무료 모델 중 가장 지능이 높고 한국어 및 코딩 능력이 뛰어난 모델 추천:
-           1. google/gemini-2.5-flash:free (최신, 코딩 및 한국어 성능 매우 우수)
-           2. meta-llama/llama-3.3-70b-instruct:free (추론 능력 우수)
-           3. deepseek/deepseek-r1:free (알고리즘 및 문제 해결 능력 우수)
-        */
-        const selectedModel = model || "google/gemini-2.5-flash:free";
+        // Meta Llama 3.3 70B 무료 모델 지정
+        const selectedModel = model || "meta-llama/llama-3.3-70b-instruct:free";
 
         // OpenRouter API 호출
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -57,13 +52,13 @@ exports.handler = async function(event, context) {
             headers: {
                 "Authorization": `Bearer ${apiKey}`,
                 "Content-Type": "application/json",
-                "HTTP-Referer": "https://code-jun.netlify.app", // 서비스 주소
+                "HTTP-Referer": "https://code-jun.netlify.app",
                 "X-Title": "Code Jun AI"
             },
             body: JSON.stringify({
                 model: selectedModel,
                 messages: finalMessages,
-                temperature: 0.5 // 답변의 횡설수설 방지 및 일관된 명확성 유지
+                temperature: 0.5 // 일관되고 명확한 답변을 유지하기 위한 설정
             })
         });
 
