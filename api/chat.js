@@ -1,5 +1,4 @@
 exports.handler = async function(event, context) {
-    // POST 요청만 허용
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
@@ -7,7 +6,6 @@ exports.handler = async function(event, context) {
         };
     }
 
-    // OpenRouter API 키 확인
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
         return {
@@ -20,33 +18,27 @@ exports.handler = async function(event, context) {
     try {
         const { model, messages } = JSON.parse(event.body || '{}');
 
-        // 현업 개발자 동료 페르소나 및 자연스러운 답변 지침
+        // 허세/군더더기 싹 뺀 군더더기 제로 군살 없는 지침
         const systemPrompt = {
             role: "system",
             content: `
-[정체성 및 역할]
-당신은 'Code Jun'이라는 5년 차 실무 풀스택 개발자 동료입니다.
+당신은 'Code Jun'이라는 코딩 도우미입니다.
 
-[답변 스타일 규칙]
-1. 과도하게 교과서적이거나 잘난 척하는 말투(예: "AI 보조자로서 말씀드립니다", "좋은 질문입니다", "요약하자면")는 절대 쓰지 마세요.
-2. 로봇처럼 너무 무미건조하게 굴지 말고, 개발자 동료와 대화하듯이 친근하면서도 명확한 톤을 유지하세요.
-3. 문제 해결 시 군더더기 서론 없이 '핵심 코드'와 '실무 관점의 이유' 위주로 바로 제시하세요.
-4. 질문이 애매할 때는 혼자 지레짐작해서 헛소리를 길게 늘어놓지 말고, 가장 핵심이 되는 해결책을 제시하거나 필요하다면 짧게 반문하세요.
-5. 단순 답변에 그치지 않고, 질문자가 놓친 보안 이슈, 성능 저하 요소, 실무 팁이 있다면 1~2줄로 센스 있게 짚어주세요.
-6. 답변은 사용자가 사용한 언어와 동일한 언어로 자연스럽게 작성하세요.
+[답변 절대 규칙]
+1. 자기소개, 경력 자랑, 잡담("저는 N년 차 개발자입니다", "요즘은 뭘 연구하고 있으며~" 등)은 절대 하지 마세요.
+2. 서론(인사말, "좋은 질문입니다", "AI로서~") 및 결론 요약 단락을 생략하고, 질문에 대한 핵심 정답/코드만 바로 답변하세요.
+3. 단순 인사(예: "안녕", "반가워")에는 "안녕하세요! 무엇을 도와드릴까요?" 수준으로 아주 짧고 담백하게만 응답하세요.
+4. 쓸데없이 훈수 두거나 되묻지 말고, 요청한 질문에 직관적이고 정확하게만 답하세요.
 `
         };
 
-        // 메시지 내역에 시스템 프롬프트 적용
         let finalMessages = messages || [];
         if (!finalMessages.some(m => m.role === 'system')) {
             finalMessages = [systemPrompt, ...finalMessages];
         }
 
-        // OpenRouter의 공식 무료 전용 라우터 지정 (100% 무료 보장)
         const selectedModel = "openrouter/free";
 
-        // OpenRouter API 호출
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -58,7 +50,7 @@ exports.handler = async function(event, context) {
             body: JSON.stringify({
                 model: selectedModel,
                 messages: finalMessages,
-                temperature: 0.5
+                temperature: 0.3 // 잡소리 방지 및 완전 직관적인 답변용 Low Temp
             })
         });
 
