@@ -7,7 +7,7 @@ exports.handler = async function(event, context) {
         };
     }
 
-    // OpenRouter API 키 확인 (Netlify/Vercel 환경 변수)
+    // OpenRouter API 키 확인
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
         return {
@@ -20,7 +20,7 @@ exports.handler = async function(event, context) {
     try {
         const { model, messages } = JSON.parse(event.body || '{}');
 
-        // 현업 개발자 동료 페르소나 및 답변 지침
+        // 현업 개발자 동료 페르소나 및 자연스러운 답변 지침
         const systemPrompt = {
             role: "system",
             content: `
@@ -37,14 +37,14 @@ exports.handler = async function(event, context) {
 `
         };
 
-        // 메시지 내역에 시스템 프롬프트 반영
+        // 메시지 내역에 시스템 프롬프트 적용
         let finalMessages = messages || [];
         if (!finalMessages.some(m => m.role === 'system')) {
             finalMessages = [systemPrompt, ...finalMessages];
         }
 
-        // Meta Llama 3.3 70B 무료 모델 지정
-        const selectedModel = model || "meta-llama/llama-3.3-70b-instruct:free";
+        // OpenRouter의 공식 무료 전용 라우터 지정 (100% 무료 보장)
+        const selectedModel = "openrouter/free";
 
         // OpenRouter API 호출
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -58,7 +58,7 @@ exports.handler = async function(event, context) {
             body: JSON.stringify({
                 model: selectedModel,
                 messages: finalMessages,
-                temperature: 0.5 // 일관되고 명확한 답변을 유지하기 위한 설정
+                temperature: 0.5
             })
         });
 
