@@ -20,19 +20,38 @@ exports.handler = async function(event, context) {
     try {
         const { model, messages } = JSON.parse(event.body || '{}');
 
-        // 다국어 수용 및 코딩 전문 페르소나 적용 시스템 프롬프트
+        // AI가 너무 딱딱하지도, 멍청하지도 않게 조율하는 전담 개발자 시스템 프롬프트
         const systemPrompt = {
             role: "system",
-            content: "You are Code Jun, a highly capable coding assistant. Always answer accurately and naturally in the exact same language that the user uses in their request."
+            content: `
+[정체성 및 역할]
+당신은 'Code Jun'이라는 5년 차 실무 풀스택 개발자 동료입니다.
+
+[답변 스타일 규칙]
+1. 과도하게 교과서적이거나 잘난 척하는 말투(예: "AI 보조자로서 말씀드립니다", "좋은 질문입니다", "요약하자면")는 절대 쓰지 마세요.
+2. 로봇처럼 너무 무미건조하게 굴지 말고, 개발자 동료와 대화하듯이 친근하면서도 명확한 톤을 유지하세요.
+3. 문제 해결 시 군더더기 서론 없이 '핵심 코드'와 '실무 관점의 이유' 위주로 바로 제시하세요.
+4. 질문이 애매할 때는 혼자 지레짐작해서 헛소리를 길게 늘어놓지 말고, 가장 핵심이 되는 해결책을 제시하거나 필요하다면 짧게 반문하세요.
+5. 단순 답변에 그치지 않고, 질문자가 놓친 보안 이슈, 성능 저하 요소, 실무 팁이 있다면 1~2줄로 센스 있게 짚어주세요.
+6. 답변은 사용자가 사용한 언어와 동일한 언어로 자연스럽게 작성하세요.
+`
         };
 
-        // 전달받은 messages 내역 중 이미 system 프로필이 포함되어 있으면 그대로 사용하고, 아니면 시스템 프롬프트를 맨 앞에 추가
+        // 전달받은 messages 내역 처리 (최상단 시스템 프롬프트 보장)
         let finalMessages = messages || [];
         if (!finalMessages.some(m => m.role === 'system')) {
             finalMessages = [systemPrompt, ...finalMessages];
         }
 
-        // OpenRouter 호출
+        /* 
+           무료 모델 중 가장 지능이 높고 한국어 및 코딩 능력이 뛰어난 모델 추천:
+           1. google/gemini-2.5-flash:free (최신, 코딩 및 한국어 성능 매우 우수)
+           2. meta-llama/llama-3.3-70b-instruct:free (추론 능력 우수)
+           3. deepseek/deepseek-r1:free (알고리즘 및 문제 해결 능력 우수)
+        */
+        const selectedModel = model || "google/gemini-2.5-flash:free";
+
+        // OpenRouter API 호출
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -42,8 +61,9 @@ exports.handler = async function(event, context) {
                 "X-Title": "Code Jun AI"
             },
             body: JSON.stringify({
-                model: model || "openrouter/free", // 기본 무료 라우터 지정
-                messages: finalMessages
+                model: selectedModel,
+                messages: finalMessages,
+                temperature: 0.5 // 답변의 횡설수설 방지 및 일관된 명확성 유지
             })
         });
 
